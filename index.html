@@ -115,17 +115,33 @@
             font-weight: 600;
             transition: all 0.3s ease;
             margin: 20px 0;
+            position: relative;
+            overflow: hidden;
         }
         .calculate-btn:hover:not(.updated) {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
         }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .calculate-btn.updated {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            animation: successPulse 0.6s ease-in-out;
         }
+        
+        @keyframes successPulse {
+            0% { 
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
+            }
+            100% { 
+                transform: scale(1);
+                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            }
+        }
+        
         .results {
             background: white;
             border: 2px solid #e9ecef;
@@ -255,7 +271,7 @@
                         <input type="number" id="turnoverRate" value="3.5" step="0.1" min="0" max="50">
                     </div>
                     <div class="input-group">
-                        <label>Expansion Turnover Increase (%)</label>
+                        <label>Expected Expansion Turnover Increase (%)</label>
                         <input type="number" id="expansionTurnover" value="1.2" step="0.1" min="0" max="10">
                     </div>
                 </div>
@@ -306,9 +322,6 @@
             </div>
 
             <button class="calculate-btn" id="calculateBtn" onclick="calculateStaffing()">Calculate Staffing Projections</button>
-            <div id="updateMessage" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 15px; margin: 15px 0; color: #155724; font-weight: 600;">
-                ✅ Staffing projections have been updated successfully!
-            </div>
         </div>
 
         <div id="scenarios" class="tab-content">
@@ -364,20 +377,16 @@
         }
 
         function calculateStaffing() {
-            // Show update message
-            const updateMessage = document.getElementById('updateMessage');
             const calculateBtn = document.getElementById('calculateBtn');
             
-            // Add visual feedback
+            // Add visual feedback - change button text and add animation
             calculateBtn.classList.add('updated');
-            calculateBtn.innerHTML = '✅ Calculations Updated!';
-            updateMessage.style.display = 'block';
+            calculateBtn.innerHTML = '✅ Projections Updated Successfully!';
             
             // Reset button after 3 seconds
             setTimeout(() => {
                 calculateBtn.classList.remove('updated');
                 calculateBtn.innerHTML = 'Calculate Staffing Projections';
-                updateMessage.style.display = 'none';
             }, 3000);
 
             // Get input values
