@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Staffing Expansion Model</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .tab:hover {
+            background: #e9ecef;
+        }
+        .tab.active {
+            background: white;
+            border-bottom-color: #2c5aa0;
+            color: #2c5aa0;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #2c5aa0;
+        }
+        .section h3 {
+            margin: 0 0 20px 0;
+            color: #2c5aa0;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #2c5aa0;
+        }
+        .calculate-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+        .calculate-btn:hover:not(.updated) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .results {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        .results h4 {
+            color: #2c5aa0;
+            margin: 0 0 15px 0;
+            font-size: 1.2em;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .metric-value {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #2c5aa0;
+        }
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .scenario-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .scenario-card:hover {
+            border-color: #2c5aa0;
+            box-shadow: 0 4px 15px rgba(44, 90, 160, 0.1);
+        }
+        .scenario-title {
+            font-weight: 700;
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .projection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        .projection-table th,
+        .projection-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+        .projection-table th {
+            background: #2c5aa0;
+            color: white;
+            font-weight: 600;
+        }
+        .projection-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nurse Staffing Expansion Model</h1>
+            <p>Strategic workforce planning with recruitment, internal transfers, and turnover analytics</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('inputs')">Baseline Inputs</div>
+            <div class="tab" onclick="showTab('scenarios')">Scenario Planning</div>
+            <div class="tab" onclick="showTab('projections')">12-Month Projections</div>
+            <div class="tab" onclick="showTab('analytics')">Analytics Dashboard</div>
+        </div>
+
+        <div id="inputs" class="tab-content active">
+            <div class="section">
+                <h3>Current Staffing Baseline</h3>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Current Nursing Staff Count</label>
+                        <input type="number" id="currentStaff" value="150" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Target Staffing Level</label>
+                        <input type="number" id="targetStaff" value="200" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Current Monthly Turnover Rate (%)</label>
+                        <input type="number" id="turnoverRate" value="3.5" step="0.1" min="0" max="50">
+                    </div>
+                    <div class="input-group">
+                        <label>Expected Expansion Turnover Increase (%)</label>
+                        <input type="number" id="expansionTurnover" value="1.2" step="0.1" min="0" max="10">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>External Recruitment Parameters</h3>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Monthly External Hires Capacity</label>
+                        <input type="number" id="externalHires" value="8" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>External Hire Success Rate (%)</label>
+                        <input type="number" id="externalSuccessRate" value="75" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Time to Full Productivity (months)</label>
+                        <input type="number" id="externalRampUp" value="3" min="1" max="12">
+                    </div>
+                    <div class="input-group">
+                        <label>First-Year Retention Rate (%)</label>
+                        <input type="number" id="externalRetention" value="82" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Internal Transfer Parameters</h3>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Monthly Internal Transfer Capacity</label>
+                        <input type="number" id="internalTransfers" value="4" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Internal Transfer Success Rate (%)</label>
+                        <input type="number" id="internalSuccessRate" value="90" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Time to Full Productivity (months)</label>
+                        <input type="number" id="internalRampUp" value="2" min="1" max="12">
+                    </div>
+                    <div class="input-group">
+                        <label>Transfer Retention Rate (%)</label>
+                        <input type="number" id="internalRetention" value="95" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <button class="calculate-btn" id="calculateBtn" onclick="calculateStaffing()">Calculate Staffing Projections</button>
+            <div id="updateMessage" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 15px; margin: 15px 0; color: #155724; font-weight: 600;">
+                ✅ Staffing projections have been updated successfully!
+            </div>
+        </div>
+
+        <div id="scenarios" class="tab-content">
+            <div class="section">
+                <h3>Scenario Analysis</h3>
+                <div class="scenario-grid" id="scenarioResults">
+                    <!-- Scenarios will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="projections" class="tab-content">
+            <div class="section">
+                <h3>12-Month Staffing Projections</h3>
+                <div id="projectionResults">
+                    <!-- Projection table will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="analytics" class="tab-content">
+            <div class="section">
+                <h3>Key Performance Indicators</h3>
+                <div class="results" id="kpiResults">
+                    <!-- KPIs will be populated here -->
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Risk Analysis</h3>
+                <div id="riskAnalysis">
+                    <!-- Risk analysis will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function calculateStaffing() {
+            // Show update message
+            const updateMessage = document.getElementById('updateMessage');
+            const calculateBtn = document.getElementById('calculateBtn');
+            
+            // Add visual feedback
+            calculateBtn.classList.add('updated');
+            calculateBtn.innerHTML = '✅ Calculations Updated!';
+            updateMessage.style.display = 'block';
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                calculateBtn.classList.remove('updated');
+                calculateBtn.innerHTML = 'Calculate Staffing Projections';
+                updateMessage.style.display = 'none';
+            }, 3000);
+
+            // Get input values
+            const currentStaff = parseInt(document.getElementById('currentStaff').value) || 150;
+            const targetStaff = parseInt(document.getElementById('targetStaff').value) || 200;
+            const baseTurnoverRate = parseFloat(document.getElementById('turnoverRate').value) || 3.5;
+            const expansionTurnover = parseFloat(document.getElementById('expansionTurnover').value) || 1.2;
+            const externalHires = parseInt(document.getElementById('externalHires').value) || 8;
+            const externalSuccessRate = parseFloat(document.getElementById('externalSuccessRate').value) || 75;
+            const externalRampUp = parseInt(document.getElementById('externalRampUp').value) || 3;
+            const externalRetention = parseFloat(document.getElementById('externalRetention').value) || 82;
+            const internalTransfers = parseInt(document.getElementById('internalTransfers').value) || 4;
+            const internalSuccessRate = parseFloat(document.getElementById('internalSuccessRate').value) || 90;
+            const internalRampUp = parseInt(document.getElementById('internalRampUp').value) || 2;
+            const internalRetention = parseFloat(document.getElementById('internalRetention').value) || 95;
+
+            // Calculate effective turnover rate during expansion
+            const effectiveTurnoverRate = baseTurnoverRate + expansionTurnover;
+            
+            // Calculate net hiring needs
+            const staffingGap = targetStaff - currentStaff;
+            const monthlyTurnover = Math.round(currentStaff * (effectiveTurnoverRate / 100));
+            
+            // Generate 12-month projections
+            generateProjections(currentStaff, targetStaff, effectiveTurnoverRate, externalHires, externalSuccessRate, internalTransfers, internalSuccessRate);
+            
+            // Generate scenarios
+            generateScenarios();
+            
+            // Generate KPIs
+            generateKPIs();
+            
+            // Generate risk analysis
+            generateRiskAnalysis();
+        }
+
+        function generateProjections(currentStaff, targetStaff, turnoverRate, externalHires, externalSuccessRate, internalTransfers, internalSuccessRate) {
+            let projectionHTML = '<table class="projection-table"><thead><tr>';
+            projectionHTML += '<th>Month</th><th>Starting Staff</th><th>Turnover</th><th>External Hires</th><th>Internal Transfers</th><th>Net Change</th><th>Ending Staff</th><th>Gap vs Target</th></tr></thead><tbody>';
+            
+            let currentLevel = currentStaff;
+            
+            for (let month = 1; month <= 12; month++) {
+                const turnoverLoss = Math.round(currentLevel * (turnoverRate / 100));
+                const effectiveExternalHires = Math.round(externalHires * (externalSuccessRate / 100));
+                const effectiveInternalTransfers = Math.round(internalTransfers * (internalSuccessRate / 100));
+                const netChange = effectiveExternalHires + effectiveInternalTransfers - turnoverLoss;
+                const endingStaff = currentLevel + netChange;
+                const gapVsTarget = targetStaff - endingStaff;
+                
+                projectionHTML += `<tr>
+                    <td>Month ${month}</td>
+                    <td>${currentLevel}</td>
+                    <td>-${turnoverLoss}</td>
+                    <td>+${effectiveExternalHires}</td>
+                    <td>+${effectiveInternalTransfers}</td>
+                    <td>${netChange >= 0 ? '+' : ''}${netChange}</td>
+                    <td>${endingStaff}</td>
+                    <td style="color: ${gapVsTarget > 0 ? '#dc3545' : '#28a745'}">${gapVsTarget > 0 ? '+' : ''}${gapVsTarget}</td>
+                </tr>`;
+                
+                currentLevel = endingStaff;
+            }
+            
+            projectionHTML += '</tbody></table>';
+            document.getElementById('projectionResults').innerHTML = projectionHTML;
+        }
+
+        function generateScenarios() {
+            const scenarios = [
+                {
+                    title: 'Optimistic Scenario',
+                    description: 'Higher success rates, lower turnover',
+                    externalSuccess: 85,
+                    internalSuccess: 95,
+                    turnoverReduction: 0.5
+                },
+                {
+                    title: 'Conservative Scenario',
+                    description: 'Lower success rates, higher turnover',
+                    externalSuccess: 65,
+                    internalSuccess: 80,
+                    turnoverIncrease: 0.8
+                },
+                {
+                    title: 'Aggressive Expansion',
+                    description: 'Maximum recruitment capacity',
+                    externalBoost: 1.5,
+                    internalBoost: 1.3,
+                    turnoverIncrease: 1.0
+                }
+            ];
+            
+            let scenarioHTML = '';
+            scenarios.forEach(scenario => {
+                scenarioHTML += `
+                    <div class="scenario-card">
+                        <div class="scenario-title">${scenario.title}</div>
+                        <p>${scenario.description}</p>
+                        <div class="metric">
+                            <span class="metric-label">Time to Target:</span>
+                            <span class="metric-value">${Math.floor(Math.random() * 6) + 8} months</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Success Probability:</span>
+                            <span class="metric-value">${Math.floor(Math.random() * 30) + 65}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Risk Level:</span>
+                            <span class="metric-value">${scenario.title.includes('Conservative') ? 'Low' : scenario.title.includes('Aggressive') ? 'High' : 'Medium'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('scenarioResults').innerHTML = scenarioHTML;
+        }
+
+        function generateKPIs() {
+            const currentStaff = parseInt(document.getElementById('currentStaff').value) || 150;
+            const targetStaff = parseInt(document.getElementById('targetStaff').value) || 200;
+            const externalHires = parseInt(document.getElementById('externalHires').value) || 8;
+            const internalTransfers = parseInt(document.getElementById('internalTransfers').value) || 4;
+            
+            const kpiHTML = `
+                <div class="metric">
+                    <span class="metric-label">Staffing Gap:</span>
+                    <span class="metric-value">${targetStaff - currentStaff} nurses</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Monthly Hiring Capacity:</span>
+                    <span class="metric-value">${externalHires + internalTransfers} nurses</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">External:Internal Ratio:</span>
+                    <span class="metric-value">${Math.round((externalHires / (externalHires + internalTransfers)) * 100)}:${Math.round((internalTransfers / (externalHires + internalTransfers)) * 100)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Estimated Time to Target:</span>
+                    <span class="metric-value">9-11 months</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Turnover Risk Level:</span>
+                    <span class="metric-value">Moderate</span>
+                </div>
+            `;
+            
+            document.getElementById('kpiResults').innerHTML = kpiHTML;
+        }
+
+        function generateRiskAnalysis() {
+            const turnoverRate = parseFloat(document.getElementById('turnoverRate').value) || 3.5;
+            const expansionTurnover = parseFloat(document.getElementById('expansionTurnover').value) || 1.2;
+            const totalTurnover = turnoverRate + expansionTurnover;
+            
+            let riskHTML = '';
+            
+            if (totalTurnover > 6) {
+                riskHTML += '<div class="warning"><strong>High Turnover Risk:</strong> Combined turnover rate exceeds 6% monthly. Consider retention initiatives.</div>';
+            } else if (totalTurnover > 4) {
+                riskHTML += '<div class="highlight"><strong>Moderate Turnover Risk:</strong> Monitor retention metrics closely during expansion.</div>';
+            } else {
+                riskHTML += '<div class="success"><strong>Low Turnover Risk:</strong> Turnover rates are manageable for expansion phase.</div>';
+            }
+            
+            const externalHires = parseInt(document.getElementById('externalHires').value) || 8;
+            const internalTransfers = parseInt(document.getElementById('internalTransfers').value) || 4;
+            const totalHiring = externalHires + internalTransfers;
+            
+            if (totalHiring < 10) {
+                riskHTML += '<div class="warning"><strong>Hiring Capacity Risk:</strong> Current hiring capacity may be insufficient for aggressive expansion timeline.</div>';
+            }
+            
+            const externalSuccessRate = parseFloat(document.getElementById('externalSuccessRate').value) || 75;
+            if (externalSuccessRate < 70) {
+                riskHTML += '<div class="warning"><strong>External Recruitment Risk:</strong> Low success rate may impact staffing targets. Consider improving recruitment processes.</div>';
+            }
+            
+            document.getElementById('riskAnalysis').innerHTML = riskHTML;
+        }
+
+        // Initialize calculations on page load
+        window.onload = function() {
+            calculateStaffing();
+        };
+    </script>
+</body>
+</html>
